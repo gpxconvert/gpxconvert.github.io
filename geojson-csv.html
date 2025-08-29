@@ -1,0 +1,48 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GeoJSON ⇄ CSV Converter (No Upload)</title>
+<meta name="description" content="Convert GeoJSON to CSV and CSV to GeoJSON in your browser. Free, fast, no uploads.">
+<link rel="canonical" href="https://gpxconvert.github.io/geojson-csv.html">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3932111812673824" crossorigin="anonymous"></script>
+<style>
+body{font:16px/1.5 system-ui,Segoe UI,Roboto,Inter,Arial;margin:0;color:#e6e8ef;background:#0b1020}
+main{max-width:900px;margin:24px auto;padding:0 16px}
+.panel{background:#12172a;border:1px solid #202741;border-radius:12px;padding:16px;margin:12px 0}
+button{border:0;border-radius:10px;padding:10px 14px;background:#1b2344;color:#dfe7ff;font-weight:600;cursor:pointer;margin-right:8px}
+input[type=file]{padding:10px;background:#0d1328;border:1px dashed #2a3555;border-radius:10px;color:#9aa2b1}
+textarea{width:100%;height:220px;background:#0d1328;color:#e6e8ef;border:1px solid #2a3555;border-radius:10px;padding:10px;font-family:ui-monospace,Menlo,Consolas,monospace}
+small{color:#9aa2b1} a{color:#58a6ff}
+</style>
+</head><body><main>
+<h1>GeoJSON ⇄ CSV Converter (client-side)</h1>
+<div class="panel"><p><strong>GeoJSON → CSV</strong></p>
+<input id="gj" type="file" accept=".geojson,.json,application/geo+json">
+<button id="toCsv">Download CSV</button>
+<small>For Point features, CSV includes <em>lat</em> and <em>lon</em>. Others include <em>geometry_type</em> and <em>coordinates</em> (JSON).</small>
+</div>
+<div class="panel"><p><strong>CSV → GeoJSON (Points)</strong></p>
+<input id="csv" type="file" accept=".csv,text/csv">
+<button id="toGeo">Download GeoJSON</button>
+<small>CSV must contain <em>lat</em>/<em>latitude</em> and <em>lon</em>/<em>lng</em>/<em>longitude</em>. Other columns become properties.</small>
+</div>
+<div class="panel"><p>Or paste data</p>
+<textarea id="paste" placeholder='Paste GeoJSON or CSV here'></textarea>
+<div style="margin-top:8px">
+<button id="pasteToCsv">Paste → CSV</button>
+<button id="pasteToGeo">Paste → GeoJSON</button>
+</div>
+</div>
+<p><a href="/">← Back to GPX/KML/GeoJSON converter</a></p>
+<script>
+function flattenProps(features){const keys=new Set();for(const f of features){if(f.properties)Object.keys(f.properties).forEach(k=>keys.add(k));}return[...keys]}
+function toCsvFromGeoJSON(fc){const feats=fc.features||[];const propKeys=flattenProps(feats);const headers=['lat','lon','geometry_type','coordinates',...propKeys];const rows=[headers.join(',')];for(const f of feats){const g=f.geometry||{};let lat='',lon='',gtype=g.type||'',coords='';if(g.type==='Point'&&Array.isArray(g.coordinates)){lon=g.coordinates[0];lat=g.coordinates[1]}else if(g.coordinates!==undefined){coords=JSON.stringify(g.coordinates).replace(/"/g,'""')}const props=propKeys.map(k=>{const v=(f.properties||{})[k];if(v===undefined||v===null)return'';const s=String(v).replace(/"/g,'""');return`"${s}"`});rows.push([lat,lon,gtype,coords?`"${coords}"`:'',...props].join(','))}return rows.join('\n')}
+function detectCsvDelimiter(s){return s.indexOf(';')>-1?';':','}
+function parseCsv(text){const d=detectCsvDelimiter(text);const [head,...lines]=text.trim().split(/\r?\n/);const cols=head.split(d).map(c=>c.trim().replace(/^"+|"+$/g,''));return lines.map(line=>{const cells=[];let cur='',q=false;for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"'){if(q&&line[i+1]==='"'){cur+='"';i++}else q=!q}else if(ch===d&&!q){cells.push(cur);cur=''}else cur+=ch}cells.push(cur);const obj={};cols.forEach((c,i)=>obj[c.toLowerCase()]=cells[i]?.replace(/^"+|"+$/g,''));return obj})}
+function csvToGeo(rows){const latKey=['lat','latitude'].find(k=>k in rows[0])||'lat';const lonKey=['lon','lng','longitude'].find(k=>k in rows[0])||'lon';const feats=rows.map(r=>{const lat=parseFloat(r[latKey]);const lon=parseFloat(r[lonKey]);const props={...r};delete props[latKey];delete props[lonKey];return{type:'Feature',geometry:{type:'Point',coordinates:[lon,lat]},properties:props}}).filter(f=>isFinite(f.geometry.coordinates[0])&&isFinite(f.geometry.coordinates[1]));return{type:'FeatureCollection',features:feats}}
+function download(str,name,mime){const b=new Blob([str],{type:mime});const url=URL.createObjectURL(b);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(url);a.remove()},0)}
+document.getElementById('toCsv').onclick=async()=>{const f=document.getElementById('gj').files[0];if(!f)return alert('Choose a GeoJSON file');const text=await f.text();const obj=JSON.parse(text);const fc=obj.type==='FeatureCollection'?obj:obj.type?{type:'FeatureCollection',features:[{type:'Feature',geometry:obj,properties:{}}]}:obj;const csv=toCsvFromGeoJSON(fc);download(csv,'data.csv','text/csv')}
+document.getElementById('toGeo').onclick=async()=>{const f=document.getElementById('csv').files[0];if(!f)return alert('Choose a CSV file');const text=await f.text();const rows=parseCsv(text);const fc=csvToGeo(rows);download(JSON.stringify(fc),'points.geojson','application/geo+json')}
+document.getElementById('pasteToCsv').onclick=()=>{try{const obj=JSON.parse(document.getElementById('paste').value);const fc=obj.type==='FeatureCollection'?obj:obj.type?{type:'FeatureCollection',features:[{type:'Feature',geometry:obj,properties:{}}]}:obj;const csv=toCsvFromGeoJSON(fc);download(csv,'data.csv','text/csv')}catch(e){alert('Paste valid GeoJSON.')}}
+document.getElementById('pasteToGeo').onclick=()=>{const text=document.getElementById('paste').value;const rows=parseCsv(text);const fc=csvToGeo(rows);download(JSON.stringify(fc),'points.geojson','application/geo+json')}
+</script>
+</main></body></html>
