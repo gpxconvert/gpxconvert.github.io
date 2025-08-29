@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Free GPX ⇄ KML ⇄ GeoJSON Converter & Merger (100% client-side)</title>
+  <meta name="description" content="Convert GPX to KML, KML to GPX, and GeoJSON online. Merge tracks and preview on a map. Privacy-friendly: everything happens in your browser." />
+  <link rel="canonical" href="https://gpx-tools.github.io/" />
+  <meta property="og:title" content="Free GPX ⇄ KML ⇄ GeoJSON Converter & Merger" />
+  <meta property="og:description" content="Convert GPX, KML, and GeoJSON in your browser. Merge files, preview on a map, and download—no upload, no sign-up." />
+  <meta property="og:type" content="website" />
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+
+  <style>
+    :root{--bg:#0b1020;--card:#12172a;--ink:#e6e8ef;--muted:#9aa2b1;--brand:#58a6ff}
+    *{box-sizing:border-box}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Inter,Arial,sans-serif;margin:0;background:var(--bg);color:var(--ink)}
+    header{padding:28px 16px;text-align:center}
+    header h1{margin:0;font-size:clamp(22px,3vw,34px)}
+    header p{margin:.5rem auto 0;max-width:720px;color:var(--muted)}
+    .wrap{max-width:1100px;margin:0 auto;padding:0 16px 56px}
+    .panel{background:var(--card);border:1px solid #202741;border-radius:16px;padding:16px;margin:12px 0;box-shadow:0 6px 30px rgba(0,0,0,.2)}
+    .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+    input[type=file]{padding:10px;background:#0d1328;border:1px dashed #2a3555;border-radius:12px;color:var(--muted)}
+    button{border:0;border-radius:12px;padding:10px 14px;background:#1b2344;color:#dfe7ff;font-weight:600;cursor:pointer}
+    button.primary{background:linear-gradient(180deg,#3772ff,#2751c7)}
+    button:disabled{opacity:.5;cursor:not-allowed}
+    .hint{color:var(--muted);font-size:.92rem}
+    #map{height:520px;border-radius:16px;overflow:hidden}
+    .badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+    .badge{font-size:12px;background:#0f1631;padding:6px 10px;border-radius:999px;color:#cfe0ff;border:1px solid #243055}
+    footer{color:var(--muted);text-align:center;padding:28px 0}
+    .ad{display:flex;align-items:center;justify-content:center;min-height:90px;background:#0d1328;border:1px dashed #2a3555;border-radius:12px;color:#6c7690}
+    details{margin-top:12px}
+    a{color:var(--brand)}
+    .success{color:#7dffa3}
+    .warn{color:#ffd166}
+  </style>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {"@type": "Question","name": "Is this GPX/KML/GeoJSON converter private?","acceptedAnswer": {"@type": "Answer","text": "Yes. All files are processed locally in your browser. Nothing is uploaded to a server."}},
+      {"@type": "Question","name": "Can I merge multiple GPX tracks?","acceptedAnswer": {"@type": "Answer","text": "Yes. Drop in multiple GPX/KML/GeoJSON files and click Download to export a single merged file."}},
+      {"@type": "Question","name": "Which formats can I export?","acceptedAnswer": {"@type": "Answer","text": "You can export to GeoJSON, KML, or GPX."}}
+    ]
+  }
+  </script>
+</head>
+<body>
+  <header>
+    <h1>Free GPX ⇄ KML ⇄ GeoJSON Converter & Merger</h1>
+    <p>Drop in <strong>GPX</strong>, <strong>KML</strong>, and <strong>GeoJSON</strong> files, preview them on the map, <strong>merge</strong> tracks, and download in your preferred format. <span class="success">100% client-side</span> — your data never leaves your device.</p>
+    <div class="badges">
+      <span class="badge">No sign-up</span>
+      <span class="badge">Works offline</span>
+      <span class="badge">Open-source</span>
+      <span class="badge">Mobile friendly</span>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="panel">
+      <div class="ad" id="ad-top">Ad space (paste your AdSense snippet here after approval)</div>
+    </div>
+
+    <div class="panel">
+      <div class="controls">
+        <input id="fileInput" type="file" accept=".gpx,.kml,.geojson,.json" multiple />
+        <button class="primary" id="btn-geojson" disabled>Download GeoJSON</button>
+        <button id="btn-kml" disabled>Download KML</button>
+        <button id="btn-gpx" disabled>Download GPX</button>
+        <button id="btn-clear" disabled>Clear</button>
+        <span class="hint">Tip: you can drag & drop files anywhere on this page</span>
+      </div>
+    </div>
+
+    <div class="panel"><div id="map"></div></div>
+
+    <div class="panel">
+      <h3>FAQ</h3>
+      <details><summary>Is anything uploaded?</summary><p>No. Everything happens in your browser using JavaScript libraries. You can even disable your internet connection after this page loads.</p></details>
+      <details><summary>Which file sizes work?</summary><p>Most hobby tracks work fine (dozens of MB). Extremely large datasets may struggle on older devices.</p></details>
+      <details><summary>What data do you collect?</summary><p>None by default. If you add analytics, state it here. Keep it privacy-friendly.</p></details>
+    </div>
+
+    <footer>Made with ♥ for hikers, runners, and map nerds. <span class="warn">Beta</span> — please verify results before critical use. · <a href="/about.html">About</a></footer>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="https://cdn.jsdelivr.net/npm/togeojson@0.16.0/dist/togeojson.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tokml@0.4.0/tokml.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/togpx@0.5.5/togpx.js"></script>
+
+  <script>
+    const map = L.map('map', { zoomControl: true }).setView([20,0], 2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
+
+    let geoLayer = null;
+    let featureCollection = { type: 'FeatureCollection', features: [] };
+
+    const fileInput = document.getElementById('fileInput');
+    const btnGeoJSON = document.getElementById('btn-geojson');
+    const btnKML = document.getElementById('btn-kml');
+    const btnGPX = document.getElementById('btn-gpx');
+    const btnClear = document.getElementById('btn-clear');
+
+    const enableButtons = (enabled) => { btnGeoJSON.disabled = btnKML.disabled = btnGPX.disabled = btnClear.disabled = !enabled; };
+
+    function fitToData(){
+      if(!geoLayer) return;
+      try{
+        const b = geoLayer.getBounds();
+        if(b.isValid()) map.fitBounds(b.pad(0.2));
+      }catch(e){}
+    }
+
+    function renderOnMap(){
+      if(geoLayer){ map.removeLayer(geoLayer); }
+      geoLayer = L.geoJSON(featureCollection, {
+        style: { weight: 3 },
+        pointToLayer: (f, latlng) => L.circleMarker(latlng, { radius: 5 })
+      }).addTo(map);
+      fitToData();
+      enableButtons(featureCollection.features.length > 0);
+    }
+
+    async function parseFile(file){
+      const ext = (file.name.split('.').pop() || '').toLowerCase();
+      const text = await file.text();
+
+      if(ext === 'gpx' || ext === 'kml'){
+        const xml = new DOMParser().parseFromString(text, 'text/xml');
+        const fc = ext === 'gpx' ? toGeoJSON.gpx(xml) : toGeoJSON.kml(xml);
+        return fc;
+      }
+
+      if(ext === 'geojson' || ext === 'json'){
+        const obj = JSON.parse(text);
+        if(obj.type === 'FeatureCollection') return obj;
+        if(obj.type && obj.coordinates){
+          return { type:'FeatureCollection', features:[{ type:'Feature', geometry: obj, properties:{} }] };
+        }
+        if(Array.isArray(obj)){
+          return { type:'FeatureCollection', features: obj.map(g => ({ type:'Feature', geometry:g, properties:{} })) };
+        }
+      }
+
+      throw new Error('Unsupported file: ' + file.name);
+    }
+
+    async function handleFiles(files){
+      const parts = [];
+      for(const f of files){
+        try {
+          const fc = await parseFile(f);
+          parts.push(...fc.features);
+        } catch(err){
+          console.error(err);
+          alert('Could not parse ' + f.name + ': ' + err.message);
+        }
+      }
+      if(parts.length){
+        featureCollection.features.push(...parts);
+        renderOnMap();
+      }
+    }
+
+    function download(dataStr, filename, mime){
+      const blob = new Blob([dataStr], { type: mime });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename; document.body.appendChild(a); a.click();
+      setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 0);
+    }
+
+    btnGeoJSON.addEventListener('click', () => {
+      download(JSON.stringify(featureCollection), 'merged.geojson', 'application/geo+json');
+    });
+
+    btnKML.addEventListener('click', () => {
+      try{
+        const kml = tokml(featureCollection, { documentName: 'Converted' });
+        download(kml, 'converted.kml', 'application/vnd.google-earth.kml+xml');
+      }catch(e){ alert('KML export failed: ' + e.message); }
+    });
+
+    btnGPX.addEventListener('click', () => {
+      try{
+        const gpx = togpx(featureCollection);
+        download(gpx, 'converted.gpx', 'application/gpx+xml');
+      }catch(e){ alert('GPX export failed: ' + e.message); }
+    });
+
+    btnClear.addEventListener('click', () => {
+      featureCollection = { type:'FeatureCollection', features: [] };
+      renderOnMap();
+    });
+
+    fileInput.addEventListener('change', (e)=> handleFiles(e.target.files));
+    window.addEventListener('dragover', (e)=>{ e.preventDefault(); });
+    window.addEventListener('drop', (e)=>{ e.preventDefault(); const files = e.dataTransfer.files; if(files && files.length) handleFiles(files); });
+
+    renderOnMap();
+  </script>
+</body>
+</html>
