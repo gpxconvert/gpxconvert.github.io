@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://gpx-tools.github.io/sitemap.xml
+Sitemap: https://gpxconvert.github.io/sitemap.xml
