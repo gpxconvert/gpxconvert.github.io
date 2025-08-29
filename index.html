@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Free GPX ⇄ KML ⇄ GeoJSON Converter & Merger (100% client-side)</title>
   <meta name="description" content="Convert GPX to KML, KML to GPX, and GeoJSON online. Merge tracks and preview on a map. Privacy-friendly: everything happens in your browser." />
-  <link rel="canonical" href="https://gpxconvert.github.io/gpxconvert.github.io/" />
+  <link rel="canonical" href="https://gpx-tools.github.io/" />
   <meta property="og:title" content="Free GPX ⇄ KML ⇄ GeoJSON Converter & Merger" />
   <meta property="og:description" content="Convert GPX, KML, and GeoJSON in your browser. Merge files, preview on a map, and download—no upload, no sign-up." />
   <meta property="og:type" content="website" />
@@ -48,239 +48,164 @@
       {"@type": "Question","name": "Which formats can I export?","acceptedAnswer": {"@type": "Answer","text": "You can export to GeoJSON, KML, or GPX."}}
     ]
   }
+  </script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3932111812673824" crossorigin="anonymous"></script>
+</head>
+<body>
+  <header>
+    <h1>Free GPX ⇄ KML ⇄ GeoJSON Converter & Merger</h1>
+    <p>Drop in <strong>GPX</strong>, <strong>KML</strong>, and <strong>GeoJSON</strong> files, preview them on the map, <strong>merge</strong> tracks, and download in your preferred format. <span class="success">100% client-side</span> — your data never leaves your device.</p>
+    <div class="badges">
+      <span class="badge">No sign-up</span>
+      <span class="badge">Works offline</span>
+      <span class="badge">Open-source</span>
+      <span class="badge">Mobile friendly</span>
+    </div>
+  </header>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="https://cdn.jsdelivr.net/npm/togeojson@0.16.0/dist/togeojson.min.js"></script>
+  <div class="wrap">
+    <div class="panel">
+      <div class="ad" id="ad-top">Ad space (paste your AdSense snippet here after approval)</div>
+    </div>
+
+    <div class="panel">
+      <div class="controls">
+        <input id="fileInput" type="file" accept=".gpx,.kml,.geojson,.json" multiple />
+        <button class="primary" id="btn-geojson" disabled>Download GeoJSON</button>
+        <button id="btn-kml" disabled>Download KML</button>
+        <button id="btn-gpx" disabled>Download GPX</button>
+        <button id="btn-clear" disabled>Clear</button>
+        <span class="hint">Tip: you can drag & drop files anywhere on this page</span>
+      </div>
+    </div>
+
+    <div class="panel"><div id="map"></div></div>
+
+    <div class="panel">
+      <h3>FAQ</h3>
+      <details><summary>Is anything uploaded?</summary><p>No. Everything happens in your browser using JavaScript libraries. You can even disable your internet connection after this page loads.</p></details>
+      <details><summary>Which file sizes work?</summary><p>Most hobby tracks work fine (dozens of MB). Extremely large datasets may struggle on older devices.</p></details>
+      <details><summary>What data do you collect?</summary><p>None by default. If you add analytics, state it here. Keep it privacy-friendly.</p></details>
+    </div>
+
+    <footer>Made with ♥ for hikers, runners, and map nerds. <span class="warn">Beta</span> — please verify results before critical use. · <a href="/about.html">About</a></footer>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="https://cdn.jsdelivr.net/npm/togeojson@0.16.0/dist/togeojson.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/tokml@0.4.0/tokml.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/tokml@0.4.0/tokml.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/togpx@0.5.5/togpx.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/togpx@0.5.5/togpx.js"></script>
 
-
-  <script>
   <script>
     const map = L.map('map', { zoomControl: true }).setView([20,0], 2);
-    const map = L.map('map', { zoomControl: true }).setView([20,0], 2);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
 
-
-    let geoLayer = null;
     let geoLayer = null;
     let featureCollection = { type: 'FeatureCollection', features: [] };
-    let featureCollection = { type: 'FeatureCollection', features: [] };
-
 
     const fileInput = document.getElementById('fileInput');
-    const fileInput = document.getElementById('fileInput');
-    const btnGeoJSON = document.getElementById('btn-geojson');
     const btnGeoJSON = document.getElementById('btn-geojson');
     const btnKML = document.getElementById('btn-kml');
-    const btnKML = document.getElementById('btn-kml');
-    const btnGPX = document.getElementById('btn-gpx');
     const btnGPX = document.getElementById('btn-gpx');
     const btnClear = document.getElementById('btn-clear');
-    const btnClear = document.getElementById('btn-clear');
-
 
     const enableButtons = (enabled) => { btnGeoJSON.disabled = btnKML.disabled = btnGPX.disabled = btnClear.disabled = !enabled; };
-    const enableButtons = (enabled) => { btnGeoJSON.disabled = btnKML.disabled = btnGPX.disabled = btnClear.disabled = !enabled; };
-
 
     function fitToData(){
-    function fitToData(){
-      if(!geoLayer) return;
       if(!geoLayer) return;
       try{
-      try{
-        const b = geoLayer.getBounds();
         const b = geoLayer.getBounds();
         if(b.isValid()) map.fitBounds(b.pad(0.2));
-        if(b.isValid()) map.fitBounds(b.pad(0.2));
-      }catch(e){}
       }catch(e){}
     }
-    }
-
 
     function renderOnMap(){
-    function renderOnMap(){
-      if(geoLayer){ map.removeLayer(geoLayer); }
       if(geoLayer){ map.removeLayer(geoLayer); }
       geoLayer = L.geoJSON(featureCollection, {
-      geoLayer = L.geoJSON(featureCollection, {
-        style: { weight: 3 },
         style: { weight: 3 },
         pointToLayer: (f, latlng) => L.circleMarker(latlng, { radius: 5 })
-        pointToLayer: (f, latlng) => L.circleMarker(latlng, { radius: 5 })
-      }).addTo(map);
       }).addTo(map);
       fitToData();
-      fitToData();
-      enableButtons(featureCollection.features.length > 0);
       enableButtons(featureCollection.features.length > 0);
     }
-    }
-
 
     async function parseFile(file){
-    async function parseFile(file){
-      const ext = (file.name.split('.').pop() || '').toLowerCase();
       const ext = (file.name.split('.').pop() || '').toLowerCase();
       const text = await file.text();
-      const text = await file.text();
-
 
       if(ext === 'gpx' || ext === 'kml'){
-      if(ext === 'gpx' || ext === 'kml'){
-        const xml = new DOMParser().parseFromString(text, 'text/xml');
         const xml = new DOMParser().parseFromString(text, 'text/xml');
         const fc = ext === 'gpx' ? toGeoJSON.gpx(xml) : toGeoJSON.kml(xml);
-        const fc = ext === 'gpx' ? toGeoJSON.gpx(xml) : toGeoJSON.kml(xml);
-        return fc;
         return fc;
       }
-      }
-
 
       if(ext === 'geojson' || ext === 'json'){
-      if(ext === 'geojson' || ext === 'json'){
-        const obj = JSON.parse(text);
         const obj = JSON.parse(text);
         if(obj.type === 'FeatureCollection') return obj;
-        if(obj.type === 'FeatureCollection') return obj;
-        if(obj.type && obj.coordinates){
         if(obj.type && obj.coordinates){
           return { type:'FeatureCollection', features:[{ type:'Feature', geometry: obj, properties:{} }] };
-          return { type:'FeatureCollection', features:[{ type:'Feature', geometry: obj, properties:{} }] };
-        }
         }
         if(Array.isArray(obj)){
-        if(Array.isArray(obj)){
-          return { type:'FeatureCollection', features: obj.map(g => ({ type:'Feature', geometry:g, properties:{} })) };
           return { type:'FeatureCollection', features: obj.map(g => ({ type:'Feature', geometry:g, properties:{} })) };
         }
-        }
       }
-      }
-
 
       throw new Error('Unsupported file: ' + file.name);
-      throw new Error('Unsupported file: ' + file.name);
     }
-    }
-
 
     async function handleFiles(files){
-    async function handleFiles(files){
-      const parts = [];
       const parts = [];
       for(const f of files){
-      for(const f of files){
-        try {
         try {
           const fc = await parseFile(f);
-          const fc = await parseFile(f);
-          parts.push(...fc.features);
           parts.push(...fc.features);
         } catch(err){
-        } catch(err){
-          console.error(err);
           console.error(err);
           alert('Could not parse ' + f.name + ': ' + err.message);
-          alert('Could not parse ' + f.name + ': ' + err.message);
-        }
         }
       }
-      }
-      if(parts.length){
       if(parts.length){
         featureCollection.features.push(...parts);
-        featureCollection.features.push(...parts);
-        renderOnMap();
         renderOnMap();
       }
-      }
     }
-    }
-
 
     function download(dataStr, filename, mime){
-    function download(dataStr, filename, mime){
-      const blob = new Blob([dataStr], { type: mime });
       const blob = new Blob([dataStr], { type: mime });
       const url = URL.createObjectURL(blob);
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
       const a = document.createElement('a');
       a.href = url; a.download = filename; document.body.appendChild(a); a.click();
-      a.href = url; a.download = filename; document.body.appendChild(a); a.click();
-      setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 0);
       setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 0);
     }
-    }
-
 
     btnGeoJSON.addEventListener('click', () => {
-    btnGeoJSON.addEventListener('click', () => {
-      download(JSON.stringify(featureCollection), 'merged.geojson', 'application/geo+json');
       download(JSON.stringify(featureCollection), 'merged.geojson', 'application/geo+json');
     });
-    });
-
 
     btnKML.addEventListener('click', () => {
-    btnKML.addEventListener('click', () => {
-      try{
       try{
         const kml = tokml(featureCollection, { documentName: 'Converted' });
-        const kml = tokml(featureCollection, { documentName: 'Converted' });
-        download(kml, 'converted.kml', 'application/vnd.google-earth.kml+xml');
         download(kml, 'converted.kml', 'application/vnd.google-earth.kml+xml');
       }catch(e){ alert('KML export failed: ' + e.message); }
-      }catch(e){ alert('KML export failed: ' + e.message); }
     });
-    });
-
 
     btnGPX.addEventListener('click', () => {
-    btnGPX.addEventListener('click', () => {
-      try{
       try{
         const gpx = togpx(featureCollection);
-        const gpx = togpx(featureCollection);
-        download(gpx, 'converted.gpx', 'application/gpx+xml');
         download(gpx, 'converted.gpx', 'application/gpx+xml');
       }catch(e){ alert('GPX export failed: ' + e.message); }
-      }catch(e){ alert('GPX export failed: ' + e.message); }
     });
-    });
-
 
     btnClear.addEventListener('click', () => {
-    btnClear.addEventListener('click', () => {
-      featureCollection = { type:'FeatureCollection', features: [] };
       featureCollection = { type:'FeatureCollection', features: [] };
       renderOnMap();
-      renderOnMap();
-    });
     });
 
-
-    fileInput.addEventListener('change', (e)=> handleFiles(e.target.files));
     fileInput.addEventListener('change', (e)=> handleFiles(e.target.files));
     window.addEventListener('dragover', (e)=>{ e.preventDefault(); });
-    window.addEventListener('dragover', (e)=>{ e.preventDefault(); });
-    window.addEventListener('drop', (e)=>{ e.preventDefault(); const files = e.dataTransfer.files; if(files && files.length) handleFiles(files); });
     window.addEventListener('drop', (e)=>{ e.preventDefault(); const files = e.dataTransfer.files; if(files && files.length) handleFiles(files); });
 
-
     renderOnMap();
-    renderOnMap();
-
-
+  </script>
 </body>
-</body>
-</html>
 </html>
