@@ -88,123 +88,253 @@
     </div>
 
     <footer>Made with ♥ for hikers, runners, and map nerds. <span class="warn">Beta</span> — please verify results before critical use. · <a href="about.html">About</a></footer>
+<section style="max-width:820px;margin:24px auto;padding:0 16px">
+  <h2>Guides</h2>
+  <ul>
+    <li><a href="/gpx-to-kml.html">Convert GPX to KML online</a></li>
+    <li><a href="/merge-gpx-files.html">Merge GPX files</a></li>
+    <li><a href="/view-gpx-online.html">View GPX on a map</a></li>
+    <li><a href="/PRIVACY.html">Privacy</a></li>
+  </ul>
+</section>
+    <footer>Made with ♥ for hikers, runners, and map nerds. <span class="warn">Beta</span> — please verify results before critical use. · <a href="about.html">About</a></footer>
+  </div>
   </div>
 
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="https://cdn.jsdelivr.net/npm/togeojson@0.16.0/dist/togeojson.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/togeojson@0.16.0/dist/togeojson.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tokml@0.4.0/tokml.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/tokml@0.4.0/tokml.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/togpx@0.5.5/togpx.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/togpx@0.5.5/togpx.js"></script>
+
 
   <script>
+  <script>
+    const map = L.map('map', { zoomControl: true }).setView([20,0], 2);
     const map = L.map('map', { zoomControl: true }).setView([20,0], 2);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
+
 
     let geoLayer = null;
+    let geoLayer = null;
+    let featureCollection = { type: 'FeatureCollection', features: [] };
     let featureCollection = { type: 'FeatureCollection', features: [] };
 
+
+    const fileInput = document.getElementById('fileInput');
     const fileInput = document.getElementById('fileInput');
     const btnGeoJSON = document.getElementById('btn-geojson');
+    const btnGeoJSON = document.getElementById('btn-geojson');
+    const btnKML = document.getElementById('btn-kml');
     const btnKML = document.getElementById('btn-kml');
     const btnGPX = document.getElementById('btn-gpx');
+    const btnGPX = document.getElementById('btn-gpx');
+    const btnClear = document.getElementById('btn-clear');
     const btnClear = document.getElementById('btn-clear');
 
+
+    const enableButtons = (enabled) => { btnGeoJSON.disabled = btnKML.disabled = btnGPX.disabled = btnClear.disabled = !enabled; };
     const enableButtons = (enabled) => { btnGeoJSON.disabled = btnKML.disabled = btnGPX.disabled = btnClear.disabled = !enabled; };
 
+
+    function fitToData(){
     function fitToData(){
       if(!geoLayer) return;
+      if(!geoLayer) return;
+      try{
       try{
         const b = geoLayer.getBounds();
+        const b = geoLayer.getBounds();
+        if(b.isValid()) map.fitBounds(b.pad(0.2));
         if(b.isValid()) map.fitBounds(b.pad(0.2));
       }catch(e){}
+      }catch(e){}
     }
+    }
+
 
     function renderOnMap(){
+    function renderOnMap(){
+      if(geoLayer){ map.removeLayer(geoLayer); }
       if(geoLayer){ map.removeLayer(geoLayer); }
       geoLayer = L.geoJSON(featureCollection, {
+      geoLayer = L.geoJSON(featureCollection, {
+        style: { weight: 3 },
         style: { weight: 3 },
         pointToLayer: (f, latlng) => L.circleMarker(latlng, { radius: 5 })
+        pointToLayer: (f, latlng) => L.circleMarker(latlng, { radius: 5 })
+      }).addTo(map);
       }).addTo(map);
       fitToData();
+      fitToData();
+      enableButtons(featureCollection.features.length > 0);
       enableButtons(featureCollection.features.length > 0);
     }
+    }
+
 
     async function parseFile(file){
+    async function parseFile(file){
+      const ext = (file.name.split('.').pop() || '').toLowerCase();
       const ext = (file.name.split('.').pop() || '').toLowerCase();
       const text = await file.text();
+      const text = await file.text();
+
 
       if(ext === 'gpx' || ext === 'kml'){
+      if(ext === 'gpx' || ext === 'kml'){
+        const xml = new DOMParser().parseFromString(text, 'text/xml');
         const xml = new DOMParser().parseFromString(text, 'text/xml');
         const fc = ext === 'gpx' ? toGeoJSON.gpx(xml) : toGeoJSON.kml(xml);
+        const fc = ext === 'gpx' ? toGeoJSON.gpx(xml) : toGeoJSON.kml(xml);
+        return fc;
         return fc;
       }
+      }
+
 
       if(ext === 'geojson' || ext === 'json'){
+      if(ext === 'geojson' || ext === 'json'){
+        const obj = JSON.parse(text);
         const obj = JSON.parse(text);
         if(obj.type === 'FeatureCollection') return obj;
+        if(obj.type === 'FeatureCollection') return obj;
+        if(obj.type && obj.coordinates){
         if(obj.type && obj.coordinates){
           return { type:'FeatureCollection', features:[{ type:'Feature', geometry: obj, properties:{} }] };
+          return { type:'FeatureCollection', features:[{ type:'Feature', geometry: obj, properties:{} }] };
+        }
         }
         if(Array.isArray(obj)){
+        if(Array.isArray(obj)){
+          return { type:'FeatureCollection', features: obj.map(g => ({ type:'Feature', geometry:g, properties:{} })) };
           return { type:'FeatureCollection', features: obj.map(g => ({ type:'Feature', geometry:g, properties:{} })) };
         }
-      }
-
-      throw new Error('Unsupported file: ' + file.name);
-    }
-
-    async function handleFiles(files){
-      const parts = [];
-      for(const f of files){
-        try {
-          const fc = await parseFile(f);
-          parts.push(...fc.features);
-        } catch(err){
-          console.error(err);
-          alert('Could not parse ' + f.name + ': ' + err.message);
         }
       }
+      }
+
+
+      throw new Error('Unsupported file: ' + file.name);
+      throw new Error('Unsupported file: ' + file.name);
+    }
+    }
+
+
+    async function handleFiles(files){
+    async function handleFiles(files){
+      const parts = [];
+      const parts = [];
+      for(const f of files){
+      for(const f of files){
+        try {
+        try {
+          const fc = await parseFile(f);
+          const fc = await parseFile(f);
+          parts.push(...fc.features);
+          parts.push(...fc.features);
+        } catch(err){
+        } catch(err){
+          console.error(err);
+          console.error(err);
+          alert('Could not parse ' + f.name + ': ' + err.message);
+          alert('Could not parse ' + f.name + ': ' + err.message);
+        }
+        }
+      }
+      }
+      if(parts.length){
       if(parts.length){
         featureCollection.features.push(...parts);
+        featureCollection.features.push(...parts);
+        renderOnMap();
         renderOnMap();
       }
+      }
     }
+    }
+
 
     function download(dataStr, filename, mime){
+    function download(dataStr, filename, mime){
+      const blob = new Blob([dataStr], { type: mime });
       const blob = new Blob([dataStr], { type: mime });
       const url = URL.createObjectURL(blob);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
       const a = document.createElement('a');
       a.href = url; a.download = filename; document.body.appendChild(a); a.click();
+      a.href = url; a.download = filename; document.body.appendChild(a); a.click();
+      setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 0);
       setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 0);
     }
+    }
+
 
     btnGeoJSON.addEventListener('click', () => {
+    btnGeoJSON.addEventListener('click', () => {
+      download(JSON.stringify(featureCollection), 'merged.geojson', 'application/geo+json');
       download(JSON.stringify(featureCollection), 'merged.geojson', 'application/geo+json');
     });
+    });
+
 
     btnKML.addEventListener('click', () => {
+    btnKML.addEventListener('click', () => {
+      try{
       try{
         const kml = tokml(featureCollection, { documentName: 'Converted' });
+        const kml = tokml(featureCollection, { documentName: 'Converted' });
+        download(kml, 'converted.kml', 'application/vnd.google-earth.kml+xml');
         download(kml, 'converted.kml', 'application/vnd.google-earth.kml+xml');
       }catch(e){ alert('KML export failed: ' + e.message); }
+      }catch(e){ alert('KML export failed: ' + e.message); }
     });
+    });
+
 
     btnGPX.addEventListener('click', () => {
+    btnGPX.addEventListener('click', () => {
+      try{
       try{
         const gpx = togpx(featureCollection);
+        const gpx = togpx(featureCollection);
+        download(gpx, 'converted.gpx', 'application/gpx+xml');
         download(gpx, 'converted.gpx', 'application/gpx+xml');
       }catch(e){ alert('GPX export failed: ' + e.message); }
+      }catch(e){ alert('GPX export failed: ' + e.message); }
     });
+    });
+
 
     btnClear.addEventListener('click', () => {
+    btnClear.addEventListener('click', () => {
+      featureCollection = { type:'FeatureCollection', features: [] };
       featureCollection = { type:'FeatureCollection', features: [] };
       renderOnMap();
+      renderOnMap();
+    });
     });
 
+
+    fileInput.addEventListener('change', (e)=> handleFiles(e.target.files));
     fileInput.addEventListener('change', (e)=> handleFiles(e.target.files));
     window.addEventListener('dragover', (e)=>{ e.preventDefault(); });
+    window.addEventListener('dragover', (e)=>{ e.preventDefault(); });
+    window.addEventListener('drop', (e)=>{ e.preventDefault(); const files = e.dataTransfer.files; if(files && files.length) handleFiles(files); });
     window.addEventListener('drop', (e)=>{ e.preventDefault(); const files = e.dataTransfer.files; if(files && files.length) handleFiles(files); });
 
+
+    renderOnMap();
     renderOnMap();
   </script>
+  </script>
 </body>
+</body>
+</html>
 </html>
