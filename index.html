@@ -69,7 +69,7 @@
     </div>
   </header>
 
-  <main id="calculator" class="max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
+  <main id="calculator" class="max-w-6xl mx-auto px-3 sm:px-6 py-8 sm:py-14">
     <section class="text-center max-w-3xl mx-auto">
       <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight leading-tight">UK Take‑Home Pay — <span class="text-blue-700">Instant</span>, Beautiful, Private</h1>
       <p class="mt-4 text-slate-600">Calculate your net pay for <strong>PAYE</strong> or <strong>Self‑Employed</strong>. Uses 2024/25 rates (updateable). Runs entirely in your browser.</p>
@@ -85,7 +85,7 @@
           <div class="grow"></div>
           <label class="inline-flex items-center gap-2 text-sm text-slate-600">
             <span>Tax year</span>
-            <select id="taxYear" class="px-3 py-2 rounded-xl border border-slate-300 bg-white">
+            <select id="taxYear" class="px-3 py-2 rounded-xl border border-slate-300 bg-white text-base sm:text-[15px]">
               <option value="2024">2024/25</option>
               <option value="2025">2025/26 (same bands as 2024/25, update if needed)</option>
             </select>
@@ -97,13 +97,13 @@
             <label class="block text-sm font-medium text-slate-700">Gross income</label>
             <div class="mt-2 relative">
               <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">£</span>
-              <input id="gross" type="number" inputmode="decimal" min="0" class="w-full pl-7 pr-3 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-4 focus:ring-blue-100" placeholder="35000" value="35000" />
+              <input id="gross" type="number" inputmode="decimal" min="0" class="w-full pl-7 pr-3 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-4 focus:ring-blue-100 text-base sm:text-[15px]" placeholder="35000" value="35000" />
             </div>
             <p class="mt-1 text-xs text-slate-500">Annual amount before tax.</p>
           </div>
           <div>
             <label class="block text-sm font-medium text-slate-700">Pay frequency</label>
-            <select id="freq" class="mt-2 w-full px-3 py-2.5 rounded-xl border border-slate-300"> 
+            <select id="freq" class="mt-2 w-full px-3 py-2.5 rounded-xl border border-slate-300 text-base sm:text-[15px]"> 
               <option value="annual">Annual</option>
               <option value="monthly">Monthly</option>
               <option value="weekly">Weekly</option>
@@ -114,12 +114,12 @@
         <div id="payeFields" class="mt-6 grid sm:grid-cols-2 gap-5">
           <div>
             <label class="block text-sm font-medium text-slate-700">Pension contribution (%)</label>
-            <input id="pensionPct" type="number" min="0" max="100" step="0.1" value="5" class="mt-2 w-full px-3 py-2.5 rounded-xl border border-slate-300" />
+            <input id="pensionPct" type="number" min="0" max="100" step="0.1" value="5" class="mt-2 w-full px-3 py-2.5 rounded-xl border border-slate-300 text-base sm:text-[15px]" />
             <p class="mt-1 text-xs text-slate-500">Reduces taxable pay (assumes relief at source).</p>
           </div>
           <div>
             <label class="block text-sm font-medium text-slate-700">Student loan</label>
-            <select id="studentPlan" class="mt-2 w-full px-3 py-2.5 rounded-xl border border-slate-300">
+            <select id="studentPlan" class="mt-2 w-full px-3 py-2.5 rounded-xl border border-slate-300 text-base sm:text-[15px]">
               <option value="none">None</option>
               <option value="plan1">Plan 1</option>
               <option value="plan2">Plan 2</option>
@@ -135,13 +135,13 @@
             <label class="block text-sm font-medium text-slate-700">Allowable expenses (annual)</label>
             <div class="mt-2 relative">
               <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">£</span>
-              <input id="expenses" type="number" min="0" value="0" class="w-full pl-7 pr-3 py-2.5 rounded-xl border border-slate-300" />
+              <input id="expenses" type="number" min="0" value="0" class="w-full pl-7 pr-3 py-2.5 rounded-xl border border-slate-300 text-base sm:text-[15px]" />
             </div>
             <p class="mt-1 text-xs text-slate-500">Deducted from income before tax/NI.</p>
           </div>
           <div>
             <label class="block text-sm font-medium text-slate-700">Voluntary Class 2 NI (£/week)</label>
-            <input id="class2" type="number" min="0" step="0.01" value="0" class="mt-2 w-full px-3 py-2.5 rounded-xl border border-slate-300" />
+            <input id="class2" type="number" min="0" step="0.01" value="0" class="mt-2 w-full px-3 py-2.5 rounded-xl border border-slate-300 text-base sm:text-[15px]" />
             <p class="mt-1 text-xs text-slate-500">Optional flat weekly amount if you choose to pay it.</p>
           </div>
         </div>
@@ -170,7 +170,7 @@
 
         <div class="mt-5 grid md:grid-cols-2 gap-6">
           <div>
-            <canvas id="pie" class="w-full h-full"></canvas>
+            <div class="w-full"><canvas id="pie" class="w-full h-64 sm:h-80 md:h-96"></canvas></div>
           </div>
           <div class="grid grid-cols-2 gap-4 text-sm">
             <div class="rounded-2xl bg-slate-50 p-4 border border-slate-200">
@@ -349,7 +349,7 @@
       if (chart){ chart.destroy() }
       chart = new Chart(ctx, {
         type: 'pie', data,
-        options: { plugins: { legend: { position: 'bottom' } }, responsive: true }
+        options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, responsive: true }
       })
     }
 
