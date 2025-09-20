@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>UK Tax Calculator 2024/25 – PAYE & Self‑Employed (Beautiful, Instant)</title>
+  <meta name="description" content="Free UK take‑home pay calculator for PAYE and self‑employed. Simple inputs, instant results, and a clean pie chart breakdown of Income Tax, National Insurance, Student Loan, Pension, and Net Pay. Runs entirely in your browser.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231d4ed8'/%3E%3Ctext x='50%25' y='58%25' text-anchor='middle' font-family='Inter, Arial, sans-serif' font-weight='700' font-size='28' fill='white'%3EUK%3C/text%3E%3C/svg%3E">
+  <!-- Tailwind via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ["Inter", "ui-sans-serif", "system-ui", "-apple-system", "Segoe UI", "Roboto", "Helvetica Neue", "Arial", "Noto Sans", "sans-serif"] },
+          boxShadow: { soft: "0 10px 30px -10px rgba(2,6,23,.2), 0 8px 10px -6px rgba(2,6,23,.15)" }
+        }
+      }
+    }
+  </script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    html { scroll-behavior: smooth }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto } }
+    .frost { backdrop-filter: saturate(140%) blur(10px); background: rgba(255,255,255,.75) }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-slate-50 via-white to-slate-100 text-slate-900">
+  <!-- Header / Hero -->
+  <header class="sticky top-0 z-40 border-b border-slate-200/60 bg-white/70 frost">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      <div class="flex h-16 items-center justify-between">
+        <a href="#" class="flex items-center gap-2 font-semibold tracking-tight">
+          <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white">£</span>
+          <span>UK Tax Calculator</span>
+        </a>
+        <nav class="hidden sm:flex items-center gap-6 text-sm text-slate-600">
+          <a class="hover:text-slate-900" href="#calculator">Calculator</a>
+          <a class="hover:text-slate-900" href="#breakdown">Breakdown</a>
+          <a class="hover:text-slate-900" href="#faq">FAQ</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main id="calculator" class="max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
+    <section class="text-center max-w-3xl mx-auto">
+      <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight leading-tight">UK Take‑Home Pay — <span class="text-blue-700">Instant</span>, Beautiful, Private</h1>
+      <p class="mt-4 text-slate-600">Calculate your net pay for <strong>PAYE</strong> or <strong>Self‑Employed</strong>. Uses 2024/25 rates (updateable). Runs entirely in your browser.</p>
+    </section>
+
+    <!-- Card -->
+    <section class="mt-8 grid lg:grid-cols-2 gap-6 items-start">
+      <!-- Controls -->
+      <div class="bg-white rounded-3xl shadow-soft p-5 sm:p-6 lg:p-7 border border-slate-200/70">
+        <div class="flex flex-wrap items-center gap-3">
+          <button id="modePAYE" class="modeBtn px-4 py-2 rounded-2xl bg-slate-100 text-slate-800 font-medium data-[active=true]:bg-blue-600 data-[active=true]:text-white">PAYE (Employee)</button>
+          <button id="modeSE" class="modeBtn px-4 py-2 rounded-2xl bg-slate-100 text-slate-800 font-medium data-[active=true]:bg-blue-600 data-[active=true]:text-white">Self‑Employed</button>
+          <div class="grow"></div>
+          <label class="inline-flex items-center gap-2 text-sm text-slate-600">
+            <span>Tax year</span>
+            <select id="taxYear" class="px-3 py-2 rounded-xl border border-slate-300 bg-white">
+              <option value="2024">2024/25</option>
+              <option value="2025">2025/26 (same bands as 2024/25, update if needed)</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="mt-6 grid sm:grid-cols-2 gap-5">
+          <div>
+            <label class="block text-sm font-medium text-slate-700">Gross income</label>
+            <div class="mt-2 relative">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">£</span>
+              <input id="gross" type="number" inputmode="decimal" min="0" class="w-full pl-7 pr-3 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-4 focus:ring-blue-100" placeholder="35000" value="35000" />
+            </div>
+            <p class="mt-1 text-xs text-slate-500">Annual amount before tax.</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700">Pay frequency</label>
+            <select id="freq" class="mt-2 w-full px-3 py-2.5 rounded-xl border border-slate-300"> 
+              <option value="annual">Annual</option>
+              <option value="monthly">Monthly</option>
+              <option value="weekly">Weekly</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="payeFields" class="mt-6 grid sm:grid-cols-2 gap-5">
+          <div>
+            <label class="block text-sm font-medium text-slate-700">Pension contribution (%)</label>
+            <input id="pensionPct" type="number" min="0" max="100" step="0.1" value="5" class="mt-2 w-full px-3 py-2.5 rounded-xl border border-slate-300" />
+            <p class="mt-1 text-xs text-slate-500">Reduces taxable pay (assumes relief at source).</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700">Student loan</label>
+            <select id="studentPlan" class="mt-2 w-full px-3 py-2.5 rounded-xl border border-slate-300">
+              <option value="none">None</option>
+              <option value="plan1">Plan 1</option>
+              <option value="plan2">Plan 2</option>
+              <option value="plan4">Plan 4 (Scotland)</option>
+              <option value="plan5">Plan 5 (England 2023+)</option>
+              <option value="postgrad">Postgrad</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="seFields" class="hidden mt-6 grid sm:grid-cols-2 gap-5">
+          <div>
+            <label class="block text-sm font-medium text-slate-700">Allowable expenses (annual)</label>
+            <div class="mt-2 relative">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">£</span>
+              <input id="expenses" type="number" min="0" value="0" class="w-full pl-7 pr-3 py-2.5 rounded-xl border border-slate-300" />
+            </div>
+            <p class="mt-1 text-xs text-slate-500">Deducted from income before tax/NI.</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700">Voluntary Class 2 NI (£/week)</label>
+            <input id="class2" type="number" min="0" step="0.01" value="0" class="mt-2 w-full px-3 py-2.5 rounded-xl border border-slate-300" />
+            <p class="mt-1 text-xs text-slate-500">Optional flat weekly amount if you choose to pay it.</p>
+          </div>
+        </div>
+
+        <div class="mt-6 flex flex-wrap items-center gap-3">
+          <button id="calcBtn" class="inline-flex items-center gap-2 rounded-2xl bg-blue-600 text-white px-5 py-3 font-semibold shadow-soft hover:translate-y-[-1px] transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h18M3 7h18M3 21h18M3 10h18M3 14h18M3 18h18"/></svg>
+            Calculate
+          </button>
+          <span id="status" class="text-sm text-slate-500">Updated instantly</span>
+        </div>
+      </div>
+
+      <!-- Results -->
+      <div class="bg-white rounded-3xl shadow-soft p-5 sm:p-6 lg:p-7 border border-slate-200/70">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <h2 class="text-xl sm:text-2xl font-bold tracking-tight">Your Results</h2>
+            <p class="text-slate-600 text-sm">Breakdown of Income Tax, NI, Student Loan, Pension and Net Pay.</p>
+          </div>
+          <div class="text-right">
+            <div class="text-3xl font-extrabold"><span id="netAnnual">£0</span></div>
+            <div class="text-xs text-slate-500">Net pay / year</div>
+          </div>
+        </div>
+
+        <div class="mt-5 grid md:grid-cols-2 gap-6">
+          <div>
+            <canvas id="pie" class="w-full h-full"></canvas>
+          </div>
+          <div class="grid grid-cols-2 gap-4 text-sm">
+            <div class="rounded-2xl bg-slate-50 p-4 border border-slate-200">
+              <div class="text-slate-500">Gross</div>
+              <div id="grossOut" class="text-lg font-semibold">£0</div>
+            </div>
+            <div class="rounded-2xl bg-slate-50 p-4 border border-slate-200">
+              <div class="text-slate-500">Income Tax</div>
+              <div id="taxOut" class="text-lg font-semibold">£0</div>
+            </div>
+            <div class="rounded-2xl bg-slate-50 p-4 border border-slate-200">
+              <div class="text-slate-500">National Insurance</div>
+              <div id="niOut" class="text-lg font-semibold">£0</div>
+            </div>
+            <div class="rounded-2xl bg-slate-50 p-4 border border-slate-200">
+              <div class="text-slate-500">Student Loan</div>
+              <div id="slOut" class="text-lg font-semibold">£0</div>
+            </div>
+            <div class="rounded-2xl bg-slate-50 p-4 border border-slate-200">
+              <div class="text-slate-500">Pension</div>
+              <div id="penOut" class="text-lg font-semibold">£0</div>
+            </div>
+            <div class="rounded-2xl bg-slate-50 p-4 border border-slate-200">
+              <div class="text-slate-500">Net (Take‑Home)</div>
+              <div id="netOut" class="text-lg font-semibold">£0</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-6 grid md:grid-cols-3 gap-4 text-sm" id="periods">
+          <!-- Filled by JS: monthly/weekly/daily -->
+        </div>
+
+        <p class="mt-6 text-xs text-slate-500">Disclaimer: This tool is for guidance only. It uses publicly available 2024/25 UK rates and assumptions listed below. Always check HMRC for definitive rules. Update rates in the code for 2025/26 when confirmed.</p>
+      </div>
+    </section>
+
+    <!-- Breakdown / FAQ -->
+    <section id="breakdown" class="mt-12 max-w-3xl mx-auto">
+      <h3 class="text-2xl font-bold">Assumptions (editable in code)</h3>
+      <ul class="mt-4 list-disc pl-6 text-slate-700 space-y-2 text-sm">
+        <li><strong>Income Tax (England/Wales 2024/25):</strong> Personal Allowance £12,570 (tapered £1 lost per £2 over £100,000), 20% basic up to £37,700 taxable, 40% to £125,140, 45% above. (Scottish bands not included here.)</li>
+        <li><strong>NI (PAYE 2024/25):</strong> Employee Class 1 ~8% on £12,570–£50,270 and 2% above. (Set in code; adjust if rates change.)</li>
+        <li><strong>NI (Self‑Employed 2024/25):</strong> Class 4 ~6% on £12,570–£50,270 and 2% above. Class 2 optional input as flat weekly amount.</li>
+        <li><strong>Student Loans:</strong> 9% above plan threshold (Plan1/2/4/5), Postgrad 6%. Thresholds set in code.</li>
+        <li><strong>Pension:</strong> Percentage of gross (relief‑at‑source assumed).</li>
+      </ul>
+      <p class="mt-3 text-xs text-slate-500">You can extend for Scottish rates, salary sacrifice, childcare vouchers, benefits‑in‑kind, etc.</p>
+    </section>
+
+    <section id="faq" class="mt-12 max-w-3xl mx-auto">
+      <h3 class="text-2xl font-bold">FAQ</h3>
+      <details class="mt-4 rounded-2xl border border-slate-200 p-4 bg-white">
+        <summary class="font-semibold cursor-pointer">Does this store or upload my data?</summary>
+        <p class="mt-2 text-sm text-slate-700">No. Everything runs in your browser; nothing is sent anywhere.</p>
+      </details>
+      <details class="mt-3 rounded-2xl border border-slate-200 p-4 bg-white">
+        <summary class="font-semibold cursor-pointer">Is Scotland supported?</summary>
+        <p class="mt-2 text-sm text-slate-700">Not yet. Add Scottish bands easily in <code>taxBands</code> if you want to support them.</p>
+      </details>
+    </section>
+  </main>
+
+  <footer class="mt-16 border-t border-slate-200/70">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-10 text-sm text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div>© <span id="year"></span> UK Tax Calculator</div>
+      <div class="flex items-center gap-4">
+        <a href="#" class="hover:text-slate-700">Privacy</a>
+        <a href="#" class="hover:text-slate-700">Disclaimer</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // ---- Configurable Rates (2024/25 defaults) ----
+    const config = {
+      personalAllowance: 12570,
+      paTaperStart: 100000,
+      paZeroAt: 125140,
+      basicRateLimit: 37700, // taxable at 20%
+      higherRateLimit: 125140, // top of 40% band (personal allowance fully removed by here)
+      rates: { basic: 0.20, higher: 0.40, additional: 0.45 },
+      niPAYE: { primaryThreshold: 12570, upperEarningsLimit: 50270, main: 0.08, upper: 0.02 },
+      niSE: { lowerProfitsLimit: 12570, upperProfitsLimit: 50270, main: 0.06, upper: 0.02 },
+      studentLoans: {
+        plan1: { thresh: 24390, rate: 0.09 },
+        plan2: { thresh: 27295, rate: 0.09 },
+        plan4: { thresh: 31695, rate: 0.09 },
+        plan5: { thresh: 25000, rate: 0.09 },
+        postgrad: { thresh: 21000, rate: 0.06 }
+      }
+    }
+
+    const byId = id => document.getElementById(id)
+    const fmt = v => v.toLocaleString(undefined, { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 })
+    const clamp = (n, a, b) => Math.max(a, Math.min(b, n))
+
+    const modePAYE = byId('modePAYE')
+    const modeSE = byId('modeSE')
+    const payeFields = byId('payeFields')
+    const seFields = byId('seFields')
+
+    let mode = 'PAYE'
+    function setMode(m){
+      mode = m
+      modePAYE.dataset.active = m === 'PAYE'
+      modeSE.dataset.active = m === 'SE'
+      payeFields.classList.toggle('hidden', m !== 'PAYE')
+      seFields.classList.toggle('hidden', m !== 'SE')
+      calculate()
+    }
+    modePAYE.addEventListener('click', () => setMode('PAYE'))
+    modeSE.addEventListener('click', () => setMode('SE'))
+
+    ;['gross','freq','pensionPct','studentPlan','expenses','class2','taxYear'].forEach(id => byId(id).addEventListener('input', calculate))
+    byId('calcBtn').addEventListener('click', calculate)
+
+    function taxableIncome(gross, pensionAmt){
+      // Relief at source pension reduces taxable pay
+      const adjusted = Math.max(0, gross - pensionAmt)
+      // Personal allowance with taper
+      let pa = config.personalAllowance
+      if (adjusted > config.paTaperStart){
+        const reduction = Math.floor((adjusted - config.paTaperStart) / 2)
+        pa = Math.max(0, config.personalAllowance - reduction)
+      }
+      const ti = Math.max(0, adjusted - pa)
+      return { taxable: ti, personalAllowanceUsed: Math.min(adjusted, pa), adjustedIncome: adjusted }
+    }
+
+    function incomeTax(taxable){
+      const { basicRateLimit, higherRateLimit, rates } = config
+      let r_basic = Math.min(taxable, basicRateLimit)
+      let r_higher = Math.min(Math.max(0, taxable - basicRateLimit), Math.max(0, higherRateLimit - basicRateLimit))
+      let r_add = Math.max(0, taxable - higherRateLimit)
+      return r_basic * rates.basic + r_higher * rates.higher + r_add * rates.additional
+    }
+
+    function niPAYECalc(gross){
+      const { primaryThreshold: PT, upperEarningsLimit: UEL, main, upper } = config.niPAYE
+      const mainBand = Math.max(0, Math.min(gross, UEL) - PT)
+      const upperBand = Math.max(0, gross - UEL)
+      return mainBand * main + upperBand * upper
+    }
+
+    function niSECalc(profit){
+      const { lowerProfitsLimit: LPL, upperProfitsLimit: UPL, main, upper } = config.niSE
+      const mainBand = Math.max(0, Math.min(profit, UPL) - LPL)
+      const upperBand = Math.max(0, profit - UPL)
+      return mainBand * main + upperBand * upper
+    }
+
+    function studentLoan(plan, income){
+      if (plan === 'none') return 0
+      if (plan === 'postgrad') return Math.max(0, (income - config.studentLoans.postgrad.thresh)) * config.studentLoans.postgrad.rate
+      const p = config.studentLoans[plan]
+      return Math.max(0, income - p.thresh) * p.rate
+    }
+
+    function perPeriod(amount){
+      return {
+        annual: amount,
+        monthly: amount / 12,
+        weekly: amount / 52,
+        daily: amount / 260
+      }
+    }
+
+    let chart
+    function drawChart(parts){
+      const ctx = document.getElementById('pie')
+      const data = {
+        labels: ['Income Tax', 'NI', 'Student Loan', 'Pension', 'Net'],
+        datasets: [{ data: [parts.tax, parts.ni, parts.sl, parts.pension, parts.net] }]
+      }
+      if (chart){ chart.destroy() }
+      chart = new Chart(ctx, {
+        type: 'pie', data,
+        options: { plugins: { legend: { position: 'bottom' } }, responsive: true }
+      })
+    }
+
+    function renderPeriods(net, gross){
+      const pNet = perPeriod(net)
+      const pGross = perPeriod(gross)
+      const el = document.getElementById('periods')
+      el.innerHTML = `
+        <div class="rounded-2xl border border-slate-200 p-4 bg-slate-50">
+          <div class="text-slate-500 mb-1">Monthly</div>
+          <div class="text-lg font-semibold">${fmt(pNet.monthly)}</div>
+          <div class="text-xs text-slate-500">Gross ${fmt(pGross.monthly)}</div>
+        </div>
+        <div class="rounded-2xl border border-slate-200 p-4 bg-slate-50">
+          <div class="text-slate-500 mb-1">Weekly</div>
+          <div class="text-lg font-semibold">${fmt(pNet.weekly)}</div>
+          <div class="text-xs text-slate-500">Gross ${fmt(pGross.weekly)}</div>
+        </div>
+        <div class="rounded-2xl border border-slate-200 p-4 bg-slate-50">
+          <div class="text-slate-500 mb-1">Daily (260 work days)</div>
+          <div class="text-lg font-semibold">${fmt(pNet.daily)}</div>
+          <div class="text-xs text-slate-500">Gross ${fmt(pGross.daily)}</div>
+        </div>`
+    }
+
+    function calculate(){
+      const grossInput = parseFloat(byId('gross').value || 0)
+      const freq = byId('freq').value
+      const annualGross = freq === 'monthly' ? grossInput * 12 : (freq === 'weekly' ? grossInput * 52 : grossInput)
+
+      let pensionAmt = 0, expenses = 0, class2 = 0
+      let plan = 'none'
+
+      if (mode === 'PAYE'){
+        const pct = clamp(parseFloat(byId('pensionPct').value || 0), 0, 100)
+        pensionAmt = annualGross * (pct/100)
+        plan = byId('studentPlan').value
+      } else {
+        expenses = parseFloat(byId('expenses').value || 0)
+        class2 = parseFloat(byId('class2').value || 0) * 52 // weekly → annual
+      }
+
+      const gross = Math.max(0, annualGross)
+      const { taxable, adjustedIncome } = taxableIncome(gross, pensionAmt)
+      const tax = incomeTax(mode === 'SE' ? Math.max(0, taxable - expenses) : taxable)
+
+      let ni = 0
+      if (mode === 'PAYE') ni = niPAYECalc(gross)
+      else {
+        const profit = Math.max(0, gross - expenses)
+        ni = niSECalc(profit) + class2
+      }
+
+      const sl = studentLoan(plan, gross)
+      const totalDeds = tax + ni + sl + pensionAmt
+      const net = Math.max(0, gross - totalDeds)
+
+      // Outputs
+      byId('grossOut').textContent = fmt(gross)
+      byId('taxOut').textContent = fmt(tax)
+      byId('niOut').textContent = fmt(ni)
+      byId('slOut').textContent = fmt(sl)
+      byId('penOut').textContent = fmt(pensionAmt)
+      byId('netOut').textContent = fmt(net)
+      byId('netAnnual').textContent = fmt(net)
+      drawChart({ tax, ni, sl, pension: pensionAmt, net })
+      renderPeriods(net, gross)
+      byId('status').textContent = 'Updated'
+    }
+
+    // Init
+    document.addEventListener('DOMContentLoaded', () => {
+      byId('year').textContent = new Date().getFullYear()
+      setMode('PAYE')
+      calculate()
+    })
+  </script>
+</body>
+</html>
