@@ -60,7 +60,7 @@
           <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white">£</span>
           <span>UK Tax Calculator</span>
         </a>
-        <nav class="hidden sm:flex items-center gap-6 text-sm text-slate-600">
+        <nav class="hidden sm:flex items-center gap-4 text-sm text-slate-600">
           <a class="hover:text-slate-900" href="#calculator">Calculator</a>
           <a class="hover:text-slate-900" href="#breakdown">Breakdown</a>
           <a class="hover:text-slate-900" href="#faq">FAQ</a>
@@ -69,16 +69,16 @@
     </div>
   </header>
 
-  <main id="calculator" class="max-w-6xl mx-auto px-3 sm:px-6 py-8 sm:py-14">
+  <main id="calculator" class="max-w-6xl mx-auto px-3 sm:px-6 py-6 sm:py-14">
     <section class="text-center max-w-3xl mx-auto">
-      <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight leading-tight">UK Take‑Home Pay — <span class="text-blue-700">Instant</span>, Beautiful, Private</h1>
+      <h1 class="text-2xl sm:text-4xl font-extrabold tracking-tight leading-tight">UK Take‑Home Pay — <span class="text-blue-700">Instant</span>, Beautiful, Private</h1>
       <p class="mt-4 text-slate-600">Calculate your net pay for <strong>PAYE</strong> or <strong>Self‑Employed</strong>. Uses 2024/25 rates (updateable). Runs entirely in your browser.</p>
     </section>
 
     <!-- Card -->
-    <section class="mt-8 grid lg:grid-cols-2 gap-6 items-start">
+    <section class="mt-8 grid lg:grid-cols-2 gap-4 items-start">
       <!-- Controls -->
-      <div class="bg-white rounded-3xl shadow-soft p-5 sm:p-6 lg:p-7 border border-slate-200/70">
+      <div class="bg-white rounded-3xl shadow-soft p-4 sm:p-5 lg:p-6 border border-slate-200/70">
         <div class="flex flex-wrap items-center gap-3">
           <button id="modePAYE" class="modeBtn px-4 py-2 rounded-2xl bg-slate-100 text-slate-800 font-medium data-[active=true]:bg-blue-600 data-[active=true]:text-white">PAYE (Employee)</button>
           <button id="modeSE" class="modeBtn px-4 py-2 rounded-2xl bg-slate-100 text-slate-800 font-medium data-[active=true]:bg-blue-600 data-[active=true]:text-white">Self‑Employed</button>
@@ -156,7 +156,7 @@
       </div>
 
       <!-- Results -->
-      <div class="bg-white rounded-3xl shadow-soft p-5 sm:p-6 lg:p-7 border border-slate-200/70">
+      <div class="bg-white rounded-3xl shadow-soft p-4 sm:p-5 lg:p-6 border border-slate-200/70">
         <div class="flex items-start justify-between gap-4">
           <div>
             <h2 class="text-xl sm:text-2xl font-bold tracking-tight">Your Results</h2>
@@ -168,9 +168,9 @@
           </div>
         </div>
 
-        <div class="mt-5 grid md:grid-cols-2 gap-6">
+        <div class="mt-5 grid md:grid-cols-2 gap-4">
           <div>
-            <div class="w-full"><canvas id="pie" class="w-full h-64 sm:h-80 md:h-96"></canvas></div>
+            <div class="w-full"><canvas id="pie" class="w-full h-56 sm:h-64 md:h-80"></canvas></div>
           </div>
           <div class="grid grid-cols-2 gap-4 text-sm">
             <div class="rounded-2xl bg-slate-50 p-4 border border-slate-200">
@@ -349,7 +349,7 @@
       if (chart){ chart.destroy() }
       chart = new Chart(ctx, {
         type: 'pie', data,
-        options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, responsive: true }
+        options: { maintainAspectRatio: false, plugins: { legend: { position: "bottom", labels: { font: { size: 10 } } } } }, responsive: true }
       })
     }
 
