@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://gpxconvert.github.io/sitemap.xml
